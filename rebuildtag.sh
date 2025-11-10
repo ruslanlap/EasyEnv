@@ -85,6 +85,10 @@ git tag $TAG_NAME
 echo "📤 Pushing new tag to remote..."
 git push --atomic --no-verify $REMOTE_NAME $TAG_NAME
 
+# Create GitHub release to trigger the workflow
+echo "🎯 Creating GitHub release for tag $TAG_NAME..."
+gh release create $TAG_NAME --title "EasyEnv $TAG_NAME" --generate-notes --latest || echo "⚠️ Could not create release (gh CLI not available or release exists)"
+
 echo "✅ Tag $TAG_NAME has been rebuilt and pushed to $REMOTE_NAME."
 
 echo "🎉 Done!"
