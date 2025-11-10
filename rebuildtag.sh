@@ -88,8 +88,8 @@ git push --atomic --no-verify $REMOTE_NAME $TAG_NAME
 echo "✅ Tag $TAG_NAME has been rebuilt and pushed to $REMOTE_NAME."
 
 echo "🎉 Done!"
-echo "🚀 GitHub Actions workflow should start soon at: https://github.com/ruslanlap/PowerToysRun-CheatSheets/actions"
+echo "🚀 GitHub Actions workflow should start soon at: https://github.com/ruslanlap/EasyEnv/actions"
 
 # Display estimated completion time
-echo "⏱️ Estimated completion time: ~5 minutes"
+echo "⏱️ Estimated completion time: ~3-5 minutes"
 
