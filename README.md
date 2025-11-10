@@ -4,7 +4,7 @@
 
 **Ephemeral, reproducible, cached development environments**
 
-*One command → ready env → run user command → keep system clean*
+*One command → isolated environment → run your code → keep system clean*
 
 [![PyPI version](https://img.shields.io/pypi/v/easyenv-cli.svg)](https://pypi.org/project/easyenv-cli/)
 [![Python](https://img.shields.io/pypi/pyversions/easyenv-cli.svg)](https://pypi.org/project/easyenv-cli/)
@@ -14,7 +14,33 @@
 
 ---
 
-EasyEnv CLI is a powerful CLI/TUI tool for creating "one-off" but reproducible and cached development environments. Say goodbye to polluting your global Python installation and hello to instant, isolated environments!
+## 🎯 What is EasyEnv?
+
+**EasyEnv CLI** is a command-line tool with terminal UI (TUI) that creates **ephemeral, reproducible, cached** Python development environments. 
+
+**Core concept:** One command → ready isolated environment → execute user code → system stays clean with zero global pollution.
+
+**Perfect for:**
+- 🧪 Testing packages without global installation
+- 🚀 CI/CD pipelines with fast, isolated builds  
+- 📚 Teaching Python with consistent environments
+- ⚡ Avoiding dependency conflicts across projects
+
+**Powered by uv** for lightning-fast package installation.
+
+## ✨ Key Features
+
+- 🚀 **Instant ephemeral environments** - Create isolated Python environments on-demand
+- 🔒 **Byte-for-byte reproducibility** - Lock files ensure exact environment replication
+- 💾 **Smart caching** - Auto-reuse environments by hash, stored in `~/.easyenv/cache`
+- 🧹 **Zero global pollution** - Everything isolated, never touches system Python
+- ⚡ **uv-powered speed** - Lightning-fast package installations
+- 🎯 **Simple DSL** - Human-readable specs: `py=3.12 pkgs:requests==2.32.3`
+- 🖥️ **Interactive TUI** - Browse and manage cached environments visually
+- 🐍 **Python version management** - Install and manage multiple Python versions
+- 📋 **Templates** - Save and reuse environment specifications
+- 🌐 **Offline mode** - Work without internet connection
+- 📊 **SBOM generation** - Automatic software bill of materials
 
 ![EasyEnv Demo](assets/dem01.png)
 
