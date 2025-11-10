@@ -527,7 +527,9 @@ def doctor() -> None:
                     console.print(f"[green]✓[/green] Python {py_ver}: Ready for use")
                     available_versions.append(py_ver)
                 else:
-                    console.print(f"[yellow]⚠[/yellow] Python {py_ver}: Found but not usable by uv (install via: easyenv-cli python install {py_ver})")
+                    console.print(f"[yellow]⚠[/yellow] Python {py_ver}: Found but not usable by uv")
+                    console.print(f"[dim]   → Fix: easyenv-cli python install {py_ver}[/dim]")
+                    console.print("[dim]   → Or use: py=3.11 in your specs[/dim]")
             except Exception:
                 console.print(f"[yellow]○[/yellow] Python {py_ver}: {py_msg}")
                 available_versions.append(py_ver)

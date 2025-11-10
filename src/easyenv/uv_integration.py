@@ -95,7 +95,12 @@ class UVIntegration:
         """
         env_path.mkdir(parents=True, exist_ok=True)
 
-        cmd = ["uv", "venv", str(env_path), "--python", python_version]
+        # Try to find the best Python path for this version
+        python_path = UVIntegration._find_python_path(python_version)
+        if python_path:
+            cmd = ["uv", "venv", str(env_path), "--python", python_path]
+        else:
+            cmd = ["uv", "venv", str(env_path), "--python", python_version]
 
         try:
             result = subprocess.run(
@@ -318,3 +323,63 @@ class UVIntegration:
                 env_vars=spec.env,
                 verbose=verbose,
             )
+
+    @staticmethod
+    def _find_python_path(python_version: str) -> str | None:
+        """Find the best Python path for a given version.
+
+        Args:
+            python_version: Python version (e.g., "3.12")
+
+        Returns:
+            Full path to Python executable or None if not found
+        """
+        try:
+            # First try uv python find with exact version
+            result = subprocess.run(
+                ["uv", "python", "find", python_version],
+                capture_output=True,
+                text=True,
+                check=False,
+                timeout=10,
+            )
+
+            if result.returncode == 0 and result.stdout.strip():
+                python_path = result.stdout.strip()
+                # Verify it's actually the right version
+                version_result = subprocess.run(
+                    [python_path, "--version"],
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                    timeout=5,
+                )
+                if version_result.returncode == 0:
+                    version_output = version_result.stdout.strip()
+                    if python_version in version_output:
+                        return python_path
+
+            # If that fails, try to get from uv python list
+            result = subprocess.run(
+                ["uv", "python", "list"],
+                capture_output=True,
+                text=True,
+                check=False,
+                timeout=10,
+            )
+
+            if result.returncode == 0:
+                # Parse output to find Python installation
+                for line in result.stdout.split('\n'):
+                    if python_version in line and '/usr/bin/python' in line:
+                        # Extract path from line like:
+                        # cpython-3.12.3-linux-x86_64-gnu /usr/bin/python3.12
+                        parts = line.split()
+                        for part in parts:
+                            if part.startswith('/usr/bin/python'):
+                                return part
+
+            return None
+
+        except (subprocess.TimeoutExpired, FileNotFoundError, Exception):
+            return None

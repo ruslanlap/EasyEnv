@@ -28,9 +28,9 @@ def show_welcome() -> None:
 ║                                                              ║
 ╚══════════════════════════════════════════════════════════════╝
 """
-    
+
     console.print(banner)
-    
+
     welcome_text = Text()
     welcome_text.append("Welcome to ", style="bold cyan")
     welcome_text.append("EasyEnv CLI", style="bold green")
