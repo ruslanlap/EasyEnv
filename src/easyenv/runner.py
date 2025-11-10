@@ -101,6 +101,7 @@ class EnvRunner:
                 cwd=str(cwd),
                 check=check,
                 timeout=timeout,
+                text=True,
             )
             return result
         except subprocess.CalledProcessError as e:

@@ -9,7 +9,7 @@ from textual.widgets import DataTable, Footer, Header, Static
 from easyenv.cache import CacheManager
 
 
-class EasyEnvTUI(App):
+class EasyEnvTUI(App[None]):
     """TUI application for browsing EasyEnv cache."""
 
     CSS = """
@@ -89,7 +89,13 @@ class EasyEnvTUI(App):
         if not table.cursor_row:
             return
 
-        row_key = table.get_row_key_at(table.cursor_row)
+        # Get the selected row key
+        row_key = None
+        if table.cursor_row is not None:
+            # Get the row key directly from the table
+            row_keys = list(table.rows.keys())
+            if table.cursor_row < len(row_keys):
+                row_key = row_keys[table.cursor_row]
         if row_key is None:
             return
 
