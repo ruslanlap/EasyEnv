@@ -25,6 +25,8 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 pip install easyenv-cli
 # or
 pipx install easyenv-cli
+# or (using uv)
+uv add easyenv-cli --global
 ```
 
 ## Quick Start
@@ -356,6 +358,9 @@ pip install easyenv-cli
 
 # Specific version
 pip install easyenv-cli==0.1.0
+
+# Using uv (recommended)
+uv add easyenv-cli --global
 
 # From source
 pip install git+https://github.com/ruslanlap/EasyEnv.git
