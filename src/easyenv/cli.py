@@ -24,6 +24,8 @@ app = typer.Typer(
     name="easyenv",
     help="EasyEnv - Ephemeral, reproducible, cached development environments",
     add_completion=False,
+    no_args_is_help=True,
+    rich_markup_mode="rich",
 )
 
 console = Console()
@@ -44,15 +46,25 @@ def get_cache_manager(config: EasyEnvConfig | None = None) -> CacheManager:
 
 @app.command()
 def run(
-    spec: str = typer.Argument(..., help="Spec string or YAML path"),
-    command: list[str] = typer.Argument(..., help="Command to run"),
+    spec: str = typer.Argument(..., help="Spec string or YAML path. Example: 'py=3.11 pkgs:requests'"),
+    command: list[str] = typer.Argument(..., help="Command to run after '--'"),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
     offline: bool = typer.Option(False, "--offline", help="Offline mode"),
 ) -> None:
     """Run command in ephemeral environment.
 
-    Example:
-        easyenv run "py=3.12 pkgs:requests==2.32.3" -- python -c "import requests"
+    [bold cyan]Examples:[/bold cyan]
+    
+      [green]# Run with Python 3.11 (if available)[/green]
+      easyenv-cli run "py=3.11 pkgs:requests" -- python -c "import requests; print('OK')"
+      
+      [green]# Multiple packages[/green]
+      easyenv-cli run "py=3.11 pkgs:requests,numpy" -- python script.py
+      
+      [green]# From YAML file[/green]
+      easyenv-cli run env.yaml -- python app.py
+    
+    [yellow]Tip:[/yellow] Run 'easyenv-cli doctor' first to see available Python versions.
     """
     try:
         # Parse spec
@@ -142,14 +154,21 @@ def run(
 
 @app.command()
 def prepare(
-    spec: str = typer.Argument(..., help="Spec string or YAML path"),
+    spec: str = typer.Argument(..., help="Spec string or YAML path. Example: 'py=3.11 pkgs:requests'"),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
     offline: bool = typer.Option(False, "--offline", help="Offline mode"),
 ) -> None:
     """Prepare environment without running command.
 
-    Example:
-        easyenv prepare "py=3.12 pkgs:requests==2.32.3"
+    [bold cyan]Examples:[/bold cyan]
+    
+      [green]# Pre-build environment with Python 3.11[/green]
+      easyenv-cli prepare "py=3.11 pkgs:requests==2.32.3"
+      
+      [green]# Prepare from YAML[/green]
+      easyenv-cli prepare env.yaml
+    
+    [yellow]Tip:[/yellow] Run 'easyenv-cli doctor' to check available Python versions.
     """
     try:
         env_spec = parse_spec(spec)
@@ -467,8 +486,8 @@ def lock_import(
 
 @app.command()
 def doctor() -> None:
-    """Diagnose EasyEnv setup."""
-    console.print("[cyan]EasyEnv Doctor[/cyan]\n")
+    """Diagnose EasyEnv setup and show available Python versions."""
+    console.print("[bold cyan]EasyEnv Doctor[/bold cyan]\n")
 
     # Check UV
     uv_ok, uv_msg = UVIntegration.check_uv_available()
@@ -476,18 +495,31 @@ def doctor() -> None:
         console.print(f"[green]✓[/green] UV: {uv_msg}")
     else:
         console.print(f"[red]✗[/red] UV: {uv_msg}")
+        console.print("[yellow]  → Install UV: curl -LsSf https://astral.sh/uv/install.sh | sh[/yellow]")
 
     # Check Python versions
-    for py_ver in ["3.11", "3.12"]:
+    console.print("\n[bold]Available Python versions:[/bold]")
+    available_versions = []
+    for py_ver in ["3.11", "3.12", "3.13"]:
         py_ok, py_msg = UVIntegration.check_python_available(py_ver)
         if py_ok:
             console.print(f"[green]✓[/green] Python {py_ver}: {py_msg}")
+            available_versions.append(py_ver)
         else:
-            console.print(f"[yellow]○[/yellow] Python {py_ver}: {py_msg}")
+            console.print(f"[yellow]○[/yellow] Python {py_ver}: Not found")
+    
+    if not available_versions:
+        console.print("\n[red]⚠ No Python versions found![/red]")
+        console.print("[yellow]Install Python using one of these methods:[/yellow]")
+        console.print("  • uv python install 3.11")
+        console.print("  • System package manager (apt, brew, etc.)")
+    else:
+        console.print(f"\n[green]✓ You can use Python: {', '.join(available_versions)}[/green]")
 
     # Check cache dir
     config = get_config()
     cache_dir = config.get_cache_dir()
+    console.print(f"\n[bold]Cache:[/bold]")
     if cache_dir.exists():
         console.print(f"[green]✓[/green] Cache dir: {cache_dir}")
     else:
@@ -503,6 +535,13 @@ def doctor() -> None:
         console.print("[yellow]○[/yellow] Config: Not found (using defaults)")
 
     console.print(f"\n[cyan]EasyEnv version:[/cyan] {__version__}")
+    
+    # Show quick start if no Python available
+    if not available_versions:
+        console.print("\n[bold yellow]Quick Start:[/bold yellow]")
+        console.print("1. Install Python: [cyan]uv python install 3.11[/cyan]")
+        console.print("2. Run doctor again: [cyan]easyenv-cli doctor[/cyan]")
+        console.print("3. Try example: [cyan]easyenv-cli run 'py=3.11 pkgs:requests' -- python -c 'import requests; print(\"OK\")'[/cyan]")
 
 
 @app.command()

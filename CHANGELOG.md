@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2] - 2024-11-10
+
+### Added
+- QUICKSTART.md guide for new users
+- Improved error messages with actionable instructions
+- Better help text with examples for all commands
+- Auto-help when running CLI without arguments
+- Python 3.13 detection in doctor command
+
+### Fixed
+- Friendly error message when Python version not found
+- Detailed installation instructions in error messages
+- Doctor command now shows quick start guide when no Python available
+
+### Changed
+- Enhanced `doctor` command with better formatting and instructions
+- Improved `run` and `prepare` commands with usage examples
+- Better UX for first-time users
+
+## [0.1.1] - 2024-11-10
+
+### Fixed
+- CI workflow: updated all commands from `easyenv` to `easyenv-cli`
+- Documentation updated with correct package name
+
+## [0.1.0] - 2024-11-10
+
 ### Added
 - Complete CLI implementation with all core commands
 - DSL and YAML spec parsing
@@ -23,22 +50,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - SBOM generation now works with UV-created virtual environments
 - Exit code handling in CLI run command
-
-### Changed
-- N/A
-
-### Removed
-- N/A
-
-## [0.1.0] - YYYY-MM-DD (Unreleased)
-
-### Added
-- Initial release of EasyEnv
-- Core commands: run, prepare, list, du, purge
-- Template management
-- Lock file support
-- Doctor diagnostics
-- TUI interface
 
 ---
 

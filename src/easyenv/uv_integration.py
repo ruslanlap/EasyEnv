@@ -109,6 +109,24 @@ class UVIntegration:
                 print(result.stdout)
         except subprocess.CalledProcessError as e:
             stderr = e.stderr if e.stderr else "Unknown error"
+            
+            # Check if it's a Python not found error
+            if "No interpreter found" in stderr or "Python downloads are set to 'never'" in stderr:
+                error_msg = (
+                    f"Python {python_version} is not available on your system.\n\n"
+                    f"To fix this, you have several options:\n\n"
+                    f"1. Install Python {python_version} using uv (recommended):\n"
+                    f"   uv python install {python_version}\n\n"
+                    f"2. Install Python {python_version} using your system package manager:\n"
+                    f"   - Ubuntu/Debian: sudo apt install python{python_version}\n"
+                    f"   - macOS: brew install python@{python_version}\n"
+                    f"   - Windows: Download from python.org\n\n"
+                    f"3. Use a different Python version that's already installed:\n"
+                    f"   Run 'easyenv-cli doctor' to see available Python versions\n\n"
+                    f"After installing Python, try your command again."
+                )
+                raise UVError(error_msg) from e
+            
             raise UVError(f"Failed to create venv: {stderr}") from e
         except subprocess.TimeoutExpired as e:
             raise UVError("Venv creation timed out") from e
