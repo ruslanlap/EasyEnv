@@ -308,41 +308,56 @@ def purge(
         None, "--max-size", help="Keep total size under (e.g., '8GB')"
     ),
     dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be removed"),
+    now: bool = typer.Option(False, "--now", help="Remove all cached environments immediately"),
 ) -> None:
     """Purge cached environments.
 
-    Example:
-        easyenv purge --older-than 30d --max-size 8GB --dry-run
+    Examples:
+        easyenv-cli purge --older-than 30d --max-size 8GB --dry-run
+        easyenv-cli purge --now  # Remove everything immediately
     """
     try:
         cache_mgr = get_cache_manager()
 
-        # Parse older_than
-        older_than_days = None
-        if older_than:
-            if older_than.endswith("d"):
-                older_than_days = int(older_than[:-1])
+        # Handle --now flag
+        if now:
+            if dry_run:
+                console.print("[yellow]Would remove ALL cached environments[/yellow]")
             else:
-                console.print("[red]Error:[/red] Invalid older-than format (use '30d')")
-                raise typer.Exit(1)
+                console.print("[yellow]Removing ALL cached environments...[/yellow]")
 
-        # Parse max_size
-        max_size_bytes = None
-        if max_size:
-            max_size = max_size.upper()
-            if max_size.endswith("GB"):
-                max_size_bytes = int(float(max_size[:-2]) * 1024 * 1024 * 1024)
-            elif max_size.endswith("MB"):
-                max_size_bytes = int(float(max_size[:-2]) * 1024 * 1024)
-            else:
-                console.print("[red]Error:[/red] Invalid max-size format (use '8GB')")
-                raise typer.Exit(1)
+            removed = cache_mgr.purge(
+                older_than_days=0,  # Remove everything
+                max_size_bytes=0,  # Remove everything
+                dry_run=dry_run,
+            )
+        else:
+            # Parse older_than
+            older_than_days = None
+            if older_than:
+                if older_than.endswith("d"):
+                    older_than_days = int(older_than[:-1])
+                else:
+                    console.print("[red]Error:[/red] Invalid older-than format (use '30d')")
+                    raise typer.Exit(1)
 
-        removed = cache_mgr.purge(
-            older_than_days=older_than_days,
-            max_size_bytes=max_size_bytes,
-            dry_run=dry_run,
-        )
+            # Parse max_size
+            max_size_bytes = None
+            if max_size:
+                max_size = max_size.upper()
+                if max_size.endswith("GB"):
+                    max_size_bytes = int(float(max_size[:-2]) * 1024 * 1024 * 1024)
+                elif max_size.endswith("MB"):
+                    max_size_bytes = int(float(max_size[:-2]) * 1024 * 1024)
+                else:
+                    console.print("[red]Error:[/red] Invalid max-size format (use '8GB')")
+                    raise typer.Exit(1)
+
+            removed = cache_mgr.purge(
+                older_than_days=older_than_days,
+                max_size_bytes=max_size_bytes,
+                dry_run=dry_run,
+            )
 
         if not removed:
             console.print("[green]No environments to remove[/green]")
@@ -674,18 +689,19 @@ def python(
                 console.print("Example: easyenv-cli python install 3.11")
                 raise typer.Exit(1)
 
-            console.print(f"[cyan]Installing Python {version}...[/cyan]")
+            console.print(f"[cyan]Installing Python {version}...[/cyan]\n")
 
             result = subprocess.run(
                 ["uv", "python", "install", version],
                 check=False,
+                capture_output=False,  # Show output in real-time
             )
 
             if result.returncode == 0:
-                console.print(f"[green]✓ Python {version} installed successfully![/green]")
-                console.print(f"\nYou can now use: [cyan]py={version}[/cyan] in your specs")
+                console.print(f"\n[green]✓ Python {version} installed successfully![/green]")
+                console.print(f"You can now use: [cyan]py={version}[/cyan] in your specs")
             else:
-                console.print(f"[red]Failed to install Python {version}[/red]")
+                console.print(f"\n[red]Failed to install Python {version}[/red]")
                 raise typer.Exit(1)
 
         elif action == "uninstall":

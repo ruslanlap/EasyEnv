@@ -8,7 +8,7 @@ set -euo pipefail
 # 3. Push the new tag to trigger the GitHub Actions workflow
 
 # Default values
-TAG_NAME="v0.1.4"
+TAG_NAME="v0.1.5"
 REMOTE_NAME="origin"
 FORCE=false
 

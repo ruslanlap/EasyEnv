@@ -325,6 +325,21 @@ class UVIntegration:
             )
 
     @staticmethod
+    def _verify_python_version(path: str, expected_version: str) -> bool:
+        """Verify that Python at path matches expected version."""
+        try:
+            result = subprocess.run(
+                [path, "--version"],
+                capture_output=True,
+                text=True,
+                check=False,
+                timeout=5,
+            )
+            return result.returncode == 0 and expected_version in result.stdout
+        except Exception:
+            return False
+
+    @staticmethod
     def _find_python_path(python_version: str) -> str | None:
         """Find the best Python path for a given version.
 
@@ -335,31 +350,7 @@ class UVIntegration:
             Full path to Python executable or None if not found
         """
         try:
-            # First try uv python find with exact version
-            result = subprocess.run(
-                ["uv", "python", "find", python_version],
-                capture_output=True,
-                text=True,
-                check=False,
-                timeout=10,
-            )
-
-            if result.returncode == 0 and result.stdout.strip():
-                python_path = result.stdout.strip()
-                # Verify it's actually the right version
-                version_result = subprocess.run(
-                    [python_path, "--version"],
-                    capture_output=True,
-                    text=True,
-                    check=False,
-                    timeout=5,
-                )
-                if version_result.returncode == 0:
-                    version_output = version_result.stdout.strip()
-                    if python_version in version_output:
-                        return python_path
-
-            # If that fails, try to get from uv python list
+            # Try to get from uv python list
             result = subprocess.run(
                 ["uv", "python", "list"],
                 capture_output=True,
@@ -369,15 +360,27 @@ class UVIntegration:
             )
 
             if result.returncode == 0:
-                # Parse output to find Python installation
                 for line in result.stdout.split("\n"):
-                    if python_version in line and "/usr/bin/python" in line:
-                        # Extract path from line like:
-                        # cpython-3.12.3-linux-x86_64-gnu /usr/bin/python3.12
-                        parts = line.split()
-                        for part in parts:
-                            if part.startswith("/usr/bin/python"):
-                                return part
+                    if python_version not in line or "<download available>" in line:
+                        continue
+
+                    parts = line.split()
+                    if len(parts) >= 2:
+                        path = parts[-1]
+                        if (
+                            path.startswith("/")
+                            and "python" in path
+                            and UVIntegration._verify_python_version(path, python_version)
+                        ):
+                            return path
+
+            # Fallback: try common system paths
+            for path in [
+                f"/usr/bin/python{python_version}",
+                f"/usr/local/bin/python{python_version}",
+            ]:
+                if UVIntegration._verify_python_version(path, python_version):
+                    return path
 
             return None
 

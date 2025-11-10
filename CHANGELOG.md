@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.5] - 2024-11-10
+
+### Added
+- `purge --now` command to immediately remove all cached environments
+- Real-time output for `python install` command
+
+### Fixed
+- `python install` now shows uv output in real-time instead of hiding it
+- Better visibility of what's happening during Python installation
+
 ## [0.1.4] - 2024-11-10
 
 ### Added
