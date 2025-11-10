@@ -3,7 +3,7 @@ requires = ["hatchling>=1.20,<1.25"]
 build-backend = "hatchling.build"
 
 [project]
-name = "easyenv"
+name = "easyenv-cli"
 version = "0.1.0"
 description = "Ephemeral, reproducible, cached development environment"
 readme = "README.md"
