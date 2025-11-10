@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -17,7 +18,7 @@ from easyenv.dsl import SpecParseError, parse_spec
 from easyenv.lock import LockManager
 from easyenv.runner import EnvRunner
 from easyenv.sbom import SBOMGenerator
-from easyenv.spec import CacheMetadata
+from easyenv.spec import CacheMetadata, EnvSpec
 from easyenv.uv_integration import UVError, UVIntegration
 from easyenv.welcome import show_welcome_if_needed
 
@@ -54,14 +55,92 @@ def get_cache_manager(config: EasyEnvConfig | None = None) -> CacheManager:
     return CacheManager(cache_dir)
 
 
+def resolve_runtime_flags(
+    config: EasyEnvConfig, verbose_option: bool | None, offline_option: bool | None
+) -> tuple[bool, bool]:
+    """Resolve runtime flags by combining config defaults with CLI overrides."""
+
+    verbose = config.verbose if verbose_option is None else verbose_option
+    offline = config.offline if offline_option is None else offline_option
+    return verbose, offline
+
+
+def ensure_environment_ready(
+    env_spec: EnvSpec,
+    cache_mgr: CacheManager,
+    *,
+    verbose: bool,
+    offline: bool,
+) -> str:
+    """Ensure an environment exists for the given spec and return its hash."""
+
+    hash_key = cache_mgr.compute_hash(env_spec)
+
+    if cache_mgr.env_exists(hash_key):
+        if verbose:
+            console.print(f"[green]Using cached environment:[/green] {hash_key}")
+        cache_mgr.update_last_used(hash_key)
+        return hash_key
+
+    console.print(f"[yellow]Creating environment:[/yellow] {hash_key}")
+
+    uv_ok, uv_msg = UVIntegration.check_uv_available()
+    if not uv_ok:
+        console.print(f"[red]Error:[/red] {uv_msg}")
+        raise typer.Exit(1)
+
+    py_ok, py_msg = UVIntegration.check_python_available(env_spec.python)
+    if not py_ok:
+        console.print(f"[red]Error:[/red] {py_msg}")
+        raise typer.Exit(1)
+    if verbose and py_msg:
+        console.print(f"[cyan]Python interpreter:[/cyan] {py_msg}")
+
+    env_path = cache_mgr.get_env_path(hash_key)
+    UVIntegration.prepare_environment(env_path, env_spec, verbose=verbose, offline=offline)
+
+    now = datetime.utcnow().isoformat()
+    metadata = CacheMetadata(
+        hash_key=hash_key,
+        spec=env_spec,
+        created_at=now,
+        last_used=now,
+        size_bytes=0,
+        platform=__import__("platform").system().lower(),
+        python_path=str(env_path / "bin" / "python"),
+        python_version=UVIntegration.get_python_version(env_path),
+        uv_version=uv_msg or "unknown",
+        cache_path=str(env_path),
+    )
+    cache_mgr.save_metadata(metadata)
+    cache_mgr.update_size(hash_key)
+
+    sbom_path = env_path / "bom.json"
+    SBOMGenerator.generate_and_save(env_path, sbom_path)
+
+    console.print(f"[green]Environment ready:[/green] {hash_key}")
+    return hash_key
+
+
 @app.command()
 def run(
     spec: str = typer.Argument(
         ..., help="Spec string or YAML path. Example: 'py=3.11 pkgs:requests'"
     ),
     command: list[str] = typer.Argument(..., help="Command to run after '--'"),
-    verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
-    offline: bool = typer.Option(False, "--offline", help="Offline mode"),
+    verbose: bool | None = typer.Option(
+        None,
+        "--verbose/--no-verbose",
+        "-v",
+        help="Verbose output",
+        show_default=False,
+    ),
+    offline: bool | None = typer.Option(
+        None,
+        "--offline/--online",
+        help="Offline mode",
+        show_default=False,
+    ),
 ) -> None:
     """Run command in ephemeral environment.
 
@@ -78,68 +157,31 @@ def run(
 
     [yellow]Tip:[/yellow] Run 'easyenv-cli doctor' first to see available Python versions.
     """
+    verbose_flag = False
+    offline_flag = False
     try:
+        config = get_config()
+        verbose_flag, offline_flag = resolve_runtime_flags(config, verbose, offline)
+
         # Parse spec
-        env_spec = parse_spec(spec)
-        if verbose:
+        env_spec = parse_spec(spec, default_python=config.default_python)
+        if verbose_flag:
             console.print(f"[cyan]Spec:[/cyan] {env_spec}")
 
         # Get cache manager
-        cache_mgr = get_cache_manager()
-        hash_key = cache_mgr.compute_hash(env_spec)
-
-        # Check if environment exists
-        if cache_mgr.env_exists(hash_key):
-            if verbose:
-                console.print(f"[green]Using cached environment:[/green] {hash_key}")
-            cache_mgr.update_last_used(hash_key)
-        else:
-            console.print(f"[yellow]Creating environment:[/yellow] {hash_key}")
-
-            # Check UV
-            uv_ok, uv_msg = UVIntegration.check_uv_available()
-            if not uv_ok:
-                console.print(f"[red]Error:[/red] {uv_msg}")
-                raise typer.Exit(1)
-
-            # Check Python
-            py_ok, py_msg = UVIntegration.check_python_available(env_spec.python)
-            if not py_ok:
-                console.print(f"[red]Error:[/red] {py_msg}")
-                raise typer.Exit(1)
-
-            # Create environment
-            env_path = cache_mgr.get_env_path(hash_key)
-            UVIntegration.prepare_environment(env_path, env_spec, verbose=verbose, offline=offline)
-
-            # Save metadata
-            now = datetime.utcnow().isoformat()
-            metadata = CacheMetadata(
-                hash_key=hash_key,
-                spec=env_spec,
-                created_at=now,
-                last_used=now,
-                size_bytes=0,
-                platform=__import__("platform").system().lower(),
-                python_path=str(env_path / "bin" / "python"),
-                python_version=UVIntegration.get_python_version(env_path),
-                uv_version=uv_msg or "unknown",
-                cache_path=str(env_path),
-            )
-            cache_mgr.save_metadata(metadata)
-            cache_mgr.update_size(hash_key)
-
-            # Generate SBOM
-            sbom_path = env_path / "bom.json"
-            SBOMGenerator.generate_and_save(env_path, sbom_path)
-
-            console.print(f"[green]Environment ready:[/green] {hash_key}")
+        cache_mgr = get_cache_manager(config)
+        hash_key = ensure_environment_ready(
+            env_spec,
+            cache_mgr,
+            verbose=verbose_flag,
+            offline=offline_flag,
+        )
 
         # Run command
         env_path = cache_mgr.get_env_path(hash_key)
         runner = EnvRunner(env_path, env_spec)
 
-        if verbose:
+        if verbose_flag:
             console.print(f"[cyan]Running:[/cyan] {' '.join(command)}")
 
         exit_code = runner.run_interactive(command)
@@ -157,7 +199,7 @@ def run(
         raise typer.Exit(130)
     except Exception as e:
         console.print(f"[red]Error:[/red] {e}")
-        if verbose:
+        if verbose_flag:
             import traceback
 
             traceback.print_exc()
@@ -169,8 +211,19 @@ def prepare(
     spec: str = typer.Argument(
         ..., help="Spec string or YAML path. Example: 'py=3.11 pkgs:requests'"
     ),
-    verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
-    offline: bool = typer.Option(False, "--offline", help="Offline mode"),
+    verbose: bool | None = typer.Option(
+        None,
+        "--verbose/--no-verbose",
+        "-v",
+        help="Verbose output",
+        show_default=False,
+    ),
+    offline: bool | None = typer.Option(
+        None,
+        "--offline/--online",
+        help="Offline mode",
+        show_default=False,
+    ),
 ) -> None:
     """Prepare environment without running command.
 
@@ -184,54 +237,24 @@ def prepare(
 
     [yellow]Tip:[/yellow] Run 'easyenv-cli doctor' to check available Python versions.
     """
+    verbose_flag = False
+    offline_flag = False
     try:
-        env_spec = parse_spec(spec)
-        cache_mgr = get_cache_manager()
-        hash_key = cache_mgr.compute_hash(env_spec)
-
-        if cache_mgr.env_exists(hash_key):
-            console.print(f"[green]Environment already exists:[/green] {hash_key}")
-            cache_mgr.update_last_used(hash_key)
-            return
-
-        console.print(f"[yellow]Creating environment:[/yellow] {hash_key}")
-
-        # Check UV
-        uv_ok, uv_msg = UVIntegration.check_uv_available()
-        if not uv_ok:
-            console.print(f"[red]Error:[/red] {uv_msg}")
-            raise typer.Exit(1)
-
-        # Create environment
-        env_path = cache_mgr.get_env_path(hash_key)
-        UVIntegration.prepare_environment(env_path, env_spec, verbose=verbose, offline=offline)
-
-        # Save metadata
-        now = datetime.utcnow().isoformat()
-        metadata = CacheMetadata(
-            hash_key=hash_key,
-            spec=env_spec,
-            created_at=now,
-            last_used=now,
-            size_bytes=0,
-            platform=__import__("platform").system().lower(),
-            python_path=str(env_path / "bin" / "python"),
-            python_version=UVIntegration.get_python_version(env_path),
-            uv_version=uv_msg or "unknown",
-            cache_path=str(env_path),
+        config = get_config()
+        verbose_flag, offline_flag = resolve_runtime_flags(config, verbose, offline)
+        env_spec = parse_spec(spec, default_python=config.default_python)
+        cache_mgr = get_cache_manager(config)
+        hash_key = ensure_environment_ready(
+            env_spec,
+            cache_mgr,
+            verbose=verbose_flag,
+            offline=offline_flag,
         )
-        cache_mgr.save_metadata(metadata)
-        cache_mgr.update_size(hash_key)
-
-        # Generate SBOM
-        sbom_path = env_path / "bom.json"
-        SBOMGenerator.generate_and_save(env_path, sbom_path)
-
         console.print(f"[green]Environment ready:[/green] {hash_key}")
 
     except Exception as e:
         console.print(f"[red]Error:[/red] {e}")
-        if verbose:
+        if verbose_flag:
             import traceback
 
             traceback.print_exc()
@@ -239,35 +262,87 @@ def prepare(
 
 
 @app.command("list")
-def list_envs() -> None:
+def list_envs(
+    details: bool = typer.Option(
+        False,
+        "--details",
+        help="Show full package/extras details for each environment",
+    ),
+    json_output: bool = typer.Option(
+        False,
+        "--json",
+        help="Output machine-readable JSON instead of a table",
+    ),
+    limit: int | None = typer.Option(
+        None,
+        "--limit",
+        help="Show only the most recent N environments",
+    ),
+) -> None:
     """List cached environments."""
     try:
         cache_mgr = get_cache_manager()
         envs = cache_mgr.list_environments()
 
+        if limit is not None and limit > 0:
+            envs = envs[:limit]
+
         if not envs:
             console.print("[yellow]No cached environments[/yellow]")
+            return
+
+        if json_output:
+            payload = []
+            for env in envs:
+                data = env.to_dict()
+                data["packages"] = env.spec.packages
+                data["extras"] = env.spec.extras
+                data["flags"] = env.spec.flags
+                payload.append(data)
+            console.print_json(data=payload)
             return
 
         table = Table(title="Cached Environments")
         table.add_column("Hash", style="cyan")
         table.add_column("Python", style="green")
         table.add_column("Packages", style="yellow")
+        if details:
+            table.add_column("Details", style="white")
         table.add_column("Size", style="magenta")
         table.add_column("Last Used", style="blue")
 
         for env in envs:
             size_mb = env.size_bytes / (1024 * 1024)
-            pkg_count = len(env.spec.packages)
-            last_used = env.last_used.split("T")[0]  # Just date
+            last_used = env.last_used.split("T")[0] if "T" in env.last_used else env.last_used
+            packages = env.spec.packages
+            if packages:
+                preview = ", ".join(packages[:3])
+                if len(packages) > 3:
+                    preview += f" … (+{len(packages) - 3})"
+            else:
+                preview = "—"
 
-            table.add_row(
+            row = [
                 env.hash_key[:12],
                 env.spec.python,
-                f"{pkg_count} packages",
-                f"{size_mb:.1f} MB",
-                last_used,
-            )
+                preview,
+            ]
+
+            if details:
+                detail_lines: list[str] = []
+                if packages:
+                    detail_lines.append(f"pkgs: {', '.join(packages)}")
+                if env.spec.extras:
+                    detail_lines.append(f"extras: {', '.join(env.spec.extras)}")
+                if env.spec.flags:
+                    flag_text = ", ".join(f"{k}={v}" for k, v in env.spec.flags.items())
+                    detail_lines.append(f"flags: {flag_text}")
+                if not detail_lines:
+                    detail_lines.append("—")
+                row.append("\n".join(detail_lines))
+
+            row.extend([f"{size_mb:.1f} MB", last_used])
+            table.add_row(*row)
 
         console.print(table)
 
@@ -430,7 +505,23 @@ def template(
 
             # Call run with template spec
             spec_str = config.templates[name]
-            run(spec=spec_str, command=command, verbose=False, offline=False)
+            verbose_flag, offline_flag = resolve_runtime_flags(
+                config, None, None
+            )
+            env_spec = parse_spec(spec_str, default_python=config.default_python)
+            cache_mgr = get_cache_manager(config)
+            hash_key = ensure_environment_ready(
+                env_spec,
+                cache_mgr,
+                verbose=verbose_flag,
+                offline=offline_flag,
+            )
+            env_path = cache_mgr.get_env_path(hash_key)
+            runner = EnvRunner(env_path, env_spec)
+            if verbose_flag:
+                console.print(f"[cyan]Running:[/cyan] {' '.join(command)}")
+            exit_code = runner.run_interactive(command)
+            raise typer.Exit(exit_code)
 
         else:
             console.print(f"[red]Unknown action:[/red] {action}")
@@ -456,7 +547,8 @@ def lock_export(
         easyenv lock export abc123def456 -o my.lock.json
     """
     try:
-        cache_mgr = get_cache_manager()
+        config = get_config()
+        cache_mgr = get_cache_manager(config)
         lock_mgr = LockManager(cache_mgr)
 
         # Check if it's a hash
@@ -464,7 +556,7 @@ def lock_export(
             hash_key = hash_or_spec
         else:
             # Try parsing as spec
-            env_spec = parse_spec(hash_or_spec)
+            env_spec = parse_spec(hash_or_spec, default_python=config.default_python)
             hash_key = cache_mgr.compute_hash(env_spec)
 
             if not cache_mgr.env_exists(hash_key):
@@ -483,16 +575,31 @@ def lock_export(
 @lock_app.command("import")
 def lock_import(
     lock_file: str = typer.Argument(..., help="Lock file to import"),
-    verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
-    offline: bool = typer.Option(False, "--offline", help="Offline mode"),
+    verbose: bool | None = typer.Option(
+        None,
+        "--verbose/--no-verbose",
+        "-v",
+        help="Verbose output",
+        show_default=False,
+    ),
+    offline: bool | None = typer.Option(
+        None,
+        "--offline/--online",
+        help="Offline mode",
+        show_default=False,
+    ),
 ) -> None:
     """Import lock file and create environment.
 
     Example:
         easyenv lock import ee.lock.json
     """
+    verbose_flag = False
+    offline_flag = False
     try:
-        cache_mgr = get_cache_manager()
+        config = get_config()
+        verbose_flag, offline_flag = resolve_runtime_flags(config, verbose, offline)
+        cache_mgr = get_cache_manager(config)
         lock_mgr = LockManager(cache_mgr)
 
         lock_path = Path(lock_file)
@@ -501,12 +608,14 @@ def lock_import(
             raise typer.Exit(1)
 
         console.print("[yellow]Importing lock file...[/yellow]")
-        hash_key = lock_mgr.import_lock(lock_path, verbose=verbose, offline=offline)
+        hash_key = lock_mgr.import_lock(
+            lock_path, verbose=verbose_flag, offline=offline_flag
+        )
         console.print(f"[green]Environment created:[/green] {hash_key}")
 
     except Exception as e:
         console.print(f"[red]Error:[/red] {e}")
-        if verbose:
+        if verbose_flag:
             import traceback
 
             traceback.print_exc()
@@ -656,6 +765,8 @@ def python(
     """
     import subprocess
 
+    config = get_config()
+
     try:
         if action == "list":
             console.print("[cyan]Checking installed Python versions...[/cyan]\n")
@@ -676,12 +787,21 @@ def python(
 
             # Also show what doctor sees
             console.print("\n[cyan]Available for EasyEnv:[/cyan]")
-            for py_ver in ["3.11", "3.12", "3.13"]:
+            versions_to_check = [config.default_python, "3.11", "3.12", "3.13"]
+            seen: set[str] = set()
+            for py_ver in versions_to_check:
+                if py_ver in seen:
+                    continue
+                seen.add(py_ver)
                 py_ok, py_msg = UVIntegration.check_python_available(py_ver)
                 if py_ok:
                     console.print(f"[green]✓[/green] Python {py_ver}: {py_msg}")
                 else:
                     console.print(f"[yellow]○[/yellow] Python {py_ver}: Not found")
+
+            console.print(
+                f"\n[cyan]Default Python (config):[/cyan] {config.default_python}"
+            )
 
         elif action == "install":
             if not version:
@@ -700,6 +820,10 @@ def python(
             if result.returncode == 0:
                 console.print(f"\n[green]✓ Python {version} installed successfully![/green]")
                 console.print(f"You can now use: [cyan]py={version}[/cyan] in your specs")
+                if version != config.default_python:
+                    console.print(
+                        "[dim]Tip: Set this as your default in the config file if desired (default_python).[/dim]"
+                    )
             else:
                 console.print(f"\n[red]Failed to install Python {version}[/red]")
                 raise typer.Exit(1)

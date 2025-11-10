@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Iterable
 
 import yaml
 
@@ -13,7 +14,26 @@ class SpecParseError(Exception):
     """Error parsing specification."""
 
 
-def parse_dsl(dsl_string: str) -> EnvSpec:
+SUPPORTED_DSL_COMPONENTS: tuple[str, ...] = ("py=", "pkgs:", "extras:", "flags:")
+
+
+def _format_component_hint(invalid_token: str) -> str:
+    """Build a helpful error message for invalid DSL components."""
+
+    import difflib
+
+    candidates: Iterable[str] = SUPPORTED_DSL_COMPONENTS
+    suggestion = difflib.get_close_matches(invalid_token.split(":", 1)[0] + (":" if ":" in invalid_token else ""), candidates, n=1)
+    supported = ", ".join(SUPPORTED_DSL_COMPONENTS)
+    if suggestion:
+        return (
+            f"Unknown DSL component: {invalid_token}. Did you mean '{suggestion[0]}'? "
+            f"Supported components: {supported}"
+        )
+    return f"Unknown DSL component: {invalid_token}. Supported components: {supported}"
+
+
+def parse_dsl(dsl_string: str, default_python: str | None = None) -> EnvSpec:
     """Parse DSL string into EnvSpec.
 
     DSL format: space-separated key-value pairs
@@ -75,15 +95,21 @@ def parse_dsl(dsl_string: str) -> EnvSpec:
             continue
 
         # Unknown part
-        raise SpecParseError(f"Unknown DSL component: {part}")
+        raise SpecParseError(_format_component_hint(part))
 
     if python_version is None:
-        raise SpecParseError("Python version (py=...) is required")
+        if default_python:
+            python_version = default_python
+        else:
+            raise SpecParseError(
+                "Python version (py=...) is required. Configure 'default_python' in "
+                "~/.config/easyenv/config.toml or include 'py=<version>' in your spec."
+            )
 
     return EnvSpec(python=python_version, packages=packages, extras=extras, flags=flags)
 
 
-def parse_yaml(yaml_path: Path) -> EnvSpec:
+def parse_yaml(yaml_path: Path, default_python: str | None = None) -> EnvSpec:
     """Parse YAML file into EnvSpec.
 
     YAML format:
@@ -120,7 +146,13 @@ def parse_yaml(yaml_path: Path) -> EnvSpec:
 
     python_version = data.get("python")
     if not python_version:
-        raise SpecParseError("Python version is required in YAML")
+        if default_python:
+            python_version = default_python
+        else:
+            raise SpecParseError(
+                "Python version is required in YAML. Either add a 'python:' key or set "
+                "'default_python' in your EasyEnv config."
+            )
 
     packages = data.get("packages", [])
     if not isinstance(packages, list):
@@ -152,7 +184,7 @@ def parse_yaml(yaml_path: Path) -> EnvSpec:
     )
 
 
-def parse_spec(spec_or_path: str) -> EnvSpec:
+def parse_spec(spec_or_path: str, default_python: str | None = None) -> EnvSpec:
     """Parse specification from DSL string or YAML file path.
 
     Args:
@@ -168,10 +200,10 @@ def parse_spec(spec_or_path: str) -> EnvSpec:
     potential_path = Path(spec_or_path)
     if potential_path.exists() and potential_path.is_file():
         # Assume YAML
-        return parse_yaml(potential_path)
+        return parse_yaml(potential_path, default_python=default_python)
 
     # Try parsing as DSL
-    return parse_dsl(spec_or_path)
+    return parse_dsl(spec_or_path, default_python=default_python)
 
 
 def export_yaml(spec: EnvSpec, output_path: Path) -> None:
