@@ -504,9 +504,7 @@ def template(
 
             # Call run with template spec
             spec_str = config.templates[name]
-            verbose_flag, offline_flag = resolve_runtime_flags(
-                config, None, None
-            )
+            verbose_flag, offline_flag = resolve_runtime_flags(config, None, None)
             env_spec = parse_spec(spec_str, default_python=config.default_python)
             cache_mgr = get_cache_manager(config)
             hash_key = ensure_environment_ready(
@@ -607,9 +605,7 @@ def lock_import(
             raise typer.Exit(1)
 
         console.print("[yellow]Importing lock file...[/yellow]")
-        hash_key = lock_mgr.import_lock(
-            lock_path, verbose=verbose_flag, offline=offline_flag
-        )
+        hash_key = lock_mgr.import_lock(lock_path, verbose=verbose_flag, offline=offline_flag)
         console.print(f"[green]Environment created:[/green] {hash_key}")
 
     except Exception as e:
@@ -798,9 +794,7 @@ def python(
                 else:
                     console.print(f"[yellow]○[/yellow] Python {py_ver}: Not found")
 
-            console.print(
-                f"\n[cyan]Default Python (config):[/cyan] {config.default_python}"
-            )
+            console.print(f"\n[cyan]Default Python (config):[/cyan] {config.default_python}")
 
         elif action == "install":
             if not version:

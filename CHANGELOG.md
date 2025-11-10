@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.6] - 2024-11-10
+
+### Added
+- **Python version management** with `easyenv-cli python` command
+  - `python install <version>` - Install Python versions via uv
+  - `python list` - List available Python versions
+  - `python uninstall <version>` - Remove installed Python versions
+- Easy switching between Python versions in environment specs
+- Documentation improvements in CLAUDE.md for future AI assistance
+
+### Fixed
+- Code formatting issues (ruff) in cli.py, dsl.py, and tui.py
+- CI workflow now passes all formatting checks
+
 ## [0.1.5] - 2024-11-10
 
 ### Added

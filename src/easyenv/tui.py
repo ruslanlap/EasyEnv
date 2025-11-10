@@ -132,9 +132,9 @@ Last Used: {metadata.last_used}
 Size: {metadata.size_bytes / (1024 * 1024):.1f} MB
 Path: {metadata.cache_path}
 
-Packages: {packages_preview or '—'}
-Extras: {', '.join(metadata.spec.extras) or '—'}
-Flags: {', '.join(f"{k}={v}" for k, v in metadata.spec.flags.items()) or '—'}
+Packages: {packages_preview or "—"}
+Extras: {", ".join(metadata.spec.extras) or "—"}
+Flags: {", ".join(f"{k}={v}" for k, v in metadata.spec.flags.items()) or "—"}
         """.strip()
         info.update(details)
 

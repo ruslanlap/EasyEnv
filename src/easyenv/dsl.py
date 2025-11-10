@@ -23,7 +23,9 @@ def _format_component_hint(invalid_token: str) -> str:
     import difflib
 
     candidates: Iterable[str] = SUPPORTED_DSL_COMPONENTS
-    suggestion = difflib.get_close_matches(invalid_token.split(":", 1)[0] + (":" if ":" in invalid_token else ""), candidates, n=1)
+    suggestion = difflib.get_close_matches(
+        invalid_token.split(":", 1)[0] + (":" if ":" in invalid_token else ""), candidates, n=1
+    )
     supported = ", ".join(SUPPORTED_DSL_COMPONENTS)
     if suggestion:
         return (
