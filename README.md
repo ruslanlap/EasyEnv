@@ -26,7 +26,7 @@ pip install easyenv-cli
 # or
 pipx install easyenv-cli
 # or (using uv)
-uv add easyenv-cli --global
+uv tool install easyenv-cli
 ```
 
 ## Quick Start
@@ -360,7 +360,7 @@ pip install easyenv-cli
 pip install easyenv-cli==0.1.0
 
 # Using uv (recommended)
-uv add easyenv-cli --global
+uv tool install easyenv-cli
 
 # From source
 pip install git+https://github.com/ruslanlap/EasyEnv.git
