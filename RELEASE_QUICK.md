@@ -41,8 +41,8 @@ git push origin v0.1.0
 
 Після публікації:
 ```bash
-pip install easyenv
-easyenv --help
+pip install easyenv-cli
+easyenv-cli --help
 ```
 
 ### 🔄 Workflow мануально
@@ -65,7 +65,7 @@ easyenv --help
 - [ ] Створити тег
 - [ ] Створити GitHub Release
 - [ ] Дочекатись успішного workflow
-- [ ] Перевірити встановлення: `pip install easyenv`
+- [ ] Перевірити встановлення: `pip install easyenv-cli`
 
 ### 🆘 Troubleshooting
 

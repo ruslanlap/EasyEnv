@@ -86,28 +86,28 @@ EasyEnv uses Least Recently Used (LRU) eviction:
 
 ```bash
 # Remove environments not used in 30 days
-easyenv purge --older-than 30d
+easyenv-cli purge --older-than 30d
 
 # Weekly cleanup
-easyenv purge --older-than 7d --dry-run
-easyenv purge --older-than 7d
+easyenv-cli purge --older-than 7d --dry-run
+easyenv-cli purge --older-than 7d
 ```
 
 #### By Size
 
 ```bash
 # Keep total cache under 8GB
-easyenv purge --max-size 8GB
+easyenv-cli purge --max-size 8GB
 
 # Aggressive cleanup (2GB limit)
-easyenv purge --max-size 2GB
+easyenv-cli purge --max-size 2GB
 ```
 
 #### Combined
 
 ```bash
 # Remove old AND keep under size limit
-easyenv purge --older-than 30d --max-size 10GB
+easyenv-cli purge --older-than 30d --max-size 10GB
 ```
 
 ### Automated Cleanup
@@ -116,7 +116,7 @@ Add to crontab:
 
 ```cron
 # Daily cleanup: remove >30 days, keep under 8GB
-0 2 * * * easyenv purge --older-than 30d --max-size 8GB
+0 2 * * * easyenv-cli purge --older-than 30d --max-size 8GB
 ```
 
 Or systemd timer:
@@ -141,7 +141,7 @@ Description=EasyEnv cache purge
 
 [Service]
 Type=oneshot
-ExecStart=/usr/local/bin/easyenv purge --older-than 30d --max-size 8GB
+ExecStart=/usr/local/bin/easyenv-cli purge --older-than 30d --max-size 8GB
 ```
 
 Enable:
@@ -166,29 +166,29 @@ Lock files capture:
 
 ```bash
 # After creating environment
-easyenv run "py=3.12 pkgs:requests" -- python -c "print('ok')"
+easyenv-cli run "py=3.12 pkgs:requests" -- python -c "print('ok')"
 
 # Find hash
-easyenv list  # Get hash (e.g., abc123def456)
+easyenv-cli list  # Get hash (e.g., abc123def456)
 
 # Export
-easyenv lock export abc123def456 -o production.lock.json
+easyenv-cli lock export abc123def456 -o production.lock.json
 ```
 
 Or from spec:
 
 ```bash
-easyenv lock export "py=3.12 pkgs:requests" -o dev.lock.json
+easyenv-cli lock export "py=3.12 pkgs:requests" -o dev.lock.json
 ```
 
 #### Import
 
 ```bash
 # Reproduces exact environment
-easyenv lock import production.lock.json
+easyenv-cli lock import production.lock.json
 
 # Use imported environment
-easyenv lock import dev.lock.json
+easyenv-cli lock import dev.lock.json
 # ... then run commands
 ```
 
@@ -221,7 +221,7 @@ jobs:
   test:
     runs-on: ${{ matrix.os }}
     steps:
-      - run: easyenv lock import ${{ matrix.os }}.lock.json
+      - run: easyenv-cli lock import ${{ matrix.os }}.lock.json
 ```
 
 ## Security Considerations
@@ -234,7 +234,7 @@ By default, EasyEnv uses PyPI via UV. For security:
 
 ```bash
 export UV_INDEX_URL="https://pypi.company.com/simple"
-easyenv run "py=3.12 pkgs:internal-pkg" -- python app.py
+easyenv-cli run "py=3.12 pkgs:internal-pkg" -- python app.py
 ```
 
 #### Domain allowlisting
@@ -251,10 +251,10 @@ Prevent network access after preparation:
 
 ```bash
 # Build environment online
-easyenv prepare "py=3.12 pkgs:requests"
+easyenv-cli prepare "py=3.12 pkgs:requests"
 
 # Run offline (no network, uses cache)
-easyenv run "py=3.12 pkgs:requests" --offline -- python app.py
+easyenv-cli run "py=3.12 pkgs:requests" --offline -- python app.py
 ```
 
 ### SBOM Generation
@@ -302,23 +302,23 @@ Each environment is isolated:
 
 ```bash
 # Online: prepare all environments
-easyenv prepare "py=3.12 pkgs:requests,numpy,pandas"
-easyenv prepare "py=3.11 pkgs:pytest,coverage"
+easyenv-cli prepare "py=3.12 pkgs:requests,numpy,pandas"
+easyenv-cli prepare "py=3.11 pkgs:pytest,coverage"
 ```
 
 ### Usage
 
 ```bash
 # Offline: use cached environments
-easyenv run "py=3.12 pkgs:requests" --offline -- python script.py
+easyenv-cli run "py=3.12 pkgs:requests" --offline -- python script.py
 ```
 
 ### Air-Gapped Systems
 
 1. **Build lock files online**:
    ```bash
-   easyenv prepare "py=3.12 pkgs:requests,numpy"
-   easyenv lock export <hash> -o offline.lock.json
+   easyenv-cli prepare "py=3.12 pkgs:requests,numpy"
+   easyenv-cli lock export <hash> -o offline.lock.json
    ```
 
 2. **Transfer to air-gapped system**:
@@ -327,7 +327,7 @@ easyenv run "py=3.12 pkgs:requests" --offline -- python script.py
 
 3. **Import offline**:
    ```bash
-   easyenv lock import offline.lock.json --offline
+   easyenv-cli lock import offline.lock.json --offline
    ```
 
 ## Custom Package Indexes
@@ -339,7 +339,7 @@ easyenv run "py=3.12 pkgs:requests" --offline -- python script.py
 export UV_INDEX_URL="https://pypi.company.com/simple"
 export UV_EXTRA_INDEX_URL="https://pypi.org/simple"  # Fallback
 
-easyenv run "py=3.12 pkgs:internal-package" -- python app.py
+easyenv-cli run "py=3.12 pkgs:internal-package" -- python app.py
 ```
 
 ### Authenticated Indexes
@@ -434,7 +434,7 @@ rm -rf ~/.easyenv/cache/<hash>
 
 # Or rebuild index
 rm ~/.easyenv/cache/index.db
-easyenv list  # Rebuilds index
+easyenv-cli list  # Rebuilds index
 ```
 
 ### Disk Space Issues
@@ -447,10 +447,10 @@ Error: No space left on device
 
 ```bash
 # Check usage
-easyenv du
+easyenv-cli du
 
 # Aggressive purge
-easyenv purge --max-size 2GB
+easyenv-cli purge --max-size 2GB
 ```
 
 ## Performance Tuning
@@ -460,9 +460,9 @@ easyenv purge --max-size 2GB
 Prepare multiple environments in parallel:
 
 ```bash
-easyenv prepare "py=3.12 pkgs:requests" &
-easyenv prepare "py=3.11 pkgs:numpy" &
-easyenv prepare "py=3.12 pkgs:pandas" &
+easyenv-cli prepare "py=3.12 pkgs:requests" &
+easyenv-cli prepare "py=3.11 pkgs:numpy" &
+easyenv-cli prepare "py=3.12 pkgs:pandas" &
 wait
 ```
 
@@ -484,12 +484,12 @@ Pre-warm common templates:
 
 ```bash
 # Create templates
-easyenv template add web "py=3.12 pkgs:flask,requests"
-easyenv template add data "py=3.12 pkgs:numpy,pandas"
+easyenv-cli template add web "py=3.12 pkgs:flask,requests"
+easyenv-cli template add data "py=3.12 pkgs:numpy,pandas"
 
 # Pre-build
-easyenv prepare "py=3.12 pkgs:flask,requests"
-easyenv prepare "py=3.12 pkgs:numpy,pandas"
+easyenv-cli prepare "py=3.12 pkgs:flask,requests"
+easyenv-cli prepare "py=3.12 pkgs:numpy,pandas"
 ```
 
 ## Integration Patterns
@@ -504,7 +504,7 @@ repos:
     hooks:
       - id: ruff
         name: Ruff
-        entry: easyenv run "py=3.12 pkgs:ruff" -- ruff check
+        entry: easyenv-cli run "py=3.12 pkgs:ruff" -- ruff check
         language: system
         types: [python]
 ```
@@ -515,13 +515,13 @@ repos:
 .PHONY: test lint format
 
 test:
-	easyenv run "py=3.12 pkgs:pytest,coverage" -- pytest
+	easyenv-cli run "py=3.12 pkgs:pytest,coverage" -- pytest
 
 lint:
-	easyenv run "py=3.12 pkgs:ruff" -- ruff check .
+	easyenv-cli run "py=3.12 pkgs:ruff" -- ruff check .
 
 format:
-	easyenv run "py=3.12 pkgs:ruff" -- ruff format .
+	easyenv-cli run "py=3.12 pkgs:ruff" -- ruff format .
 ```
 
 ### Task Runners
@@ -530,10 +530,10 @@ format:
 
 ```just
 test:
-  easyenv run "py=3.12 pkgs:pytest" -- pytest
+  easyenv-cli run "py=3.12 pkgs:pytest" -- pytest
 
 lint:
-  easyenv run "py=3.12 pkgs:ruff" -- ruff check .
+  easyenv-cli run "py=3.12 pkgs:ruff" -- ruff check .
 ```
 
 #### Task (go-task)
@@ -543,10 +543,10 @@ version: '3'
 tasks:
   test:
     cmds:
-      - easyenv run "py=3.12 pkgs:pytest" -- pytest
+      - easyenv-cli run "py=3.12 pkgs:pytest" -- pytest
   lint:
     cmds:
-      - easyenv run "py=3.12 pkgs:ruff" -- ruff check .
+      - easyenv-cli run "py=3.12 pkgs:ruff" -- ruff check .
 ```
 
 ### CI/CD Patterns
@@ -564,7 +564,7 @@ jobs:
   test:
     steps:
       - run: |
-          easyenv run "py=${{ matrix.python }} pkgs:${{ matrix.packages }}" -- pytest
+          easyenv-cli run "py=${{ matrix.python }} pkgs:${{ matrix.packages }}" -- pytest
 ```
 
 #### Cached Dependencies

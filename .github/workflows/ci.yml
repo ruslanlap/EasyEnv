@@ -131,37 +131,37 @@ jobs:
 
       - name: Test CLI - doctor
         run: |
-          easyenv doctor
+          easyenv-cli doctor
 
       - name: Test CLI - version
         run: |
-          easyenv version
+          easyenv-cli version
 
       - name: Test CLI - list
         run: |
-          easyenv list
+          easyenv-cli list
 
       - name: Test CLI - du
         run: |
-          easyenv du
+          easyenv-cli du
 
       - name: Test CLI - prepare
         run: |
-          easyenv prepare "py=3.11 pkgs:requests==2.32.3" -v
+          easyenv-cli prepare "py=3.11 pkgs:requests==2.32.3" -v
 
       - name: Test CLI - run
         run: |
-          easyenv run "py=3.11 pkgs:requests==2.32.3" -v -- python -c "import requests; print(f'Requests {requests.__version__}')"
+          easyenv-cli run "py=3.11 pkgs:requests==2.32.3" -v -- python -c "import requests; print(f'Requests {requests.__version__}')"
 
       - name: Test CLI - list after prepare
         run: |
-          easyenv list
+          easyenv-cli list
 
       - name: Test CLI - templates
         run: |
-          easyenv template add test "py=3.12 pkgs:pytest"
-          easyenv template list
+          easyenv-cli template add test "py=3.12 pkgs:pytest"
+          easyenv-cli template list
 
       - name: Test CLI - purge dry run
         run: |
-          easyenv purge --older-than 1d --dry-run
+          easyenv-cli purge --older-than 1d --dry-run

@@ -20,8 +20,8 @@ Trusted publishing uses OpenID Connect (OIDC) to securely publish without API to
 
 1. Go to https://test.pypi.org/manage/account/publishing/
 2. Add a new pending publisher:
-   - **PyPI Project Name**: `easyenv`
-   - **Owner**: `ruslanlap` (your GitHub username)
+   - **PyPI Project Name**: `easyenv-cli`
+   - **Owner**: `ruslanlap`
    - **Repository name**: `EasyEnv`
    - **Workflow name**: `release.yml`
    - **Environment name**: `testpypi`
@@ -58,7 +58,7 @@ Build → TestPyPI → PyPI
 1. **Update version** in `pyproject.toml`:
    ```toml
    [project]
-   name = "easyenv"
+   name = "easyenv-cli"
    version = "0.1.0"  # ← Update this
    ```
 
@@ -86,8 +86,8 @@ Build → TestPyPI → PyPI
    - Watch: https://github.com/ruslanlap/EasyEnv/actions
    - The workflow will:
      1. Build the package
-     2. Publish to TestPyPI (verify at https://test.pypi.org/project/easyenv/)
-     3. Publish to PyPI (verify at https://pypi.org/project/easyenv/)
+     2. Publish to TestPyPI (verify at https://test.pypi.org/project/easyenv-cli/)
+     3. Publish to PyPI (verify at https://pypi.org/project/easyenv-cli/)
 
 ### Manual Release
 
@@ -113,8 +113,8 @@ python -m build
 twine check dist/*
 
 # Test installation locally
-pip install dist/easyenv-0.1.0-py3-none-any.whl
-easyenv --help
+pip install dist/easyenv_cli-0.1.0-py3-none-any.whl
+easyenv-cli --help
 ```
 
 ### TestPyPI Installation Test
@@ -123,11 +123,11 @@ After publishing to TestPyPI:
 
 ```bash
 # Install from TestPyPI
-pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ easyenv
+pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ easyenv-cli
 
 # Test it works
-easyenv doctor
-easyenv run "py=3.12 pkgs:requests" -- python -c "import requests; print('OK')"
+easyenv-cli doctor
+easyenv-cli run "py=3.12 pkgs:requests" -- python -c "import requests; print('OK')"
 ```
 
 ## Version Numbering
@@ -149,7 +149,7 @@ For pre-releases, use:
 
 If you need to yank a release (mark it as broken):
 
-1. Go to PyPI project page: https://pypi.org/project/easyenv/
+1. Go to PyPI project page: https://pypi.org/project/easyenv-cli/
 2. Click on the version to yank
 3. Click "Options" → "Yank release"
 4. Provide a reason
@@ -213,8 +213,8 @@ password = pypi-...
 
 After a successful release:
 
-- ✅ Verify package on PyPI: https://pypi.org/project/easyenv/
-- ✅ Test installation: `pip install easyenv`
+- ✅ Verify package on PyPI: https://pypi.org/project/easyenv-cli/
+- ✅ Test installation: `pip install easyenv-cli`
 - ✅ Update documentation if needed
 - ✅ Announce release (Twitter, Discord, etc.)
 - ✅ Close milestone if using GitHub milestones
