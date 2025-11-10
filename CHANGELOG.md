@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.3] - 2024-11-10
+
+### Fixed
+- Doctor now properly detects if Python is usable by uv (not just installed)
+- Better error messages explaining when system Python needs uv installation
+
 ## [0.1.2] - 2024-11-10
 
 ### Added
@@ -23,8 +29,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Friendly error message when Python version not found
 - Detailed installation instructions in error messages
 - Doctor command now shows quick start guide when no Python available
-- Doctor now properly detects if Python is usable by uv (not just installed)
-- Better error messages explaining when system Python needs uv installation
 
 ### Changed
 - Enhanced `doctor` command with better formatting and instructions
