@@ -207,6 +207,8 @@ easyenv-cli purge --max-size 8GB
 easyenv-cli purge --older-than 7d
 ```
 
+![Cache Management](assets/demo6.png)
+
 ### 🔒 Lock Files for Reproducibility
 
 Ensure byte-for-byte reproducible environments across machines!
@@ -221,6 +223,8 @@ easyenv-cli lock import production.lock.json
 
 # Share lock files with your team for guaranteed consistency!
 ```
+
+![Lock File Management](assets/demo7.png)
 
 ### 🐍 Python Version Management
 
@@ -239,6 +243,8 @@ easyenv-cli python install 3.12
 # Uninstall Python version
 easyenv-cli python uninstall 3.12
 ```
+
+![Python Version Management](assets/demo5.png)
 
 ### 🩺 Diagnostics
 
