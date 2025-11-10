@@ -109,7 +109,7 @@ class UVIntegration:
                 print(result.stdout)
         except subprocess.CalledProcessError as e:
             stderr = e.stderr if e.stderr else "Unknown error"
-            
+
             # Check if it's a Python not found error
             if "No interpreter found" in stderr or "Python downloads are set to 'never'" in stderr:
                 error_msg = (
@@ -129,7 +129,7 @@ class UVIntegration:
                     f"After installing, try your command again."
                 )
                 raise UVError(error_msg) from e
-            
+
             raise UVError(f"Failed to create venv: {stderr}") from e
         except subprocess.TimeoutExpired as e:
             raise UVError("Venv creation timed out") from e

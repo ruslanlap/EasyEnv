@@ -64,16 +64,16 @@ def run(
     """Run command in ephemeral environment.
 
     [bold cyan]Examples:[/bold cyan]
-    
+
       [green]# Run with Python 3.11 (if available)[/green]
       easyenv-cli run "py=3.11 pkgs:requests" -- python -c "import requests; print('OK')"
-      
+
       [green]# Multiple packages[/green]
       easyenv-cli run "py=3.11 pkgs:requests,numpy" -- python script.py
-      
+
       [green]# From YAML file[/green]
       easyenv-cli run env.yaml -- python app.py
-    
+
     [yellow]Tip:[/yellow] Run 'easyenv-cli doctor' first to see available Python versions.
     """
     try:
@@ -171,13 +171,13 @@ def prepare(
     """Prepare environment without running command.
 
     [bold cyan]Examples:[/bold cyan]
-    
+
       [green]# Pre-build environment with Python 3.11[/green]
       easyenv-cli prepare "py=3.11 pkgs:requests==2.32.3"
-      
+
       [green]# Prepare from YAML[/green]
       easyenv-cli prepare env.yaml
-    
+
     [yellow]Tip:[/yellow] Run 'easyenv-cli doctor' to check available Python versions.
     """
     try:
@@ -533,7 +533,7 @@ def doctor() -> None:
                 available_versions.append(py_ver)
         else:
             console.print(f"[yellow]○[/yellow] Python {py_ver}: Not found")
-    
+
     if not available_versions:
         console.print("\n[red]⚠ No Python versions found![/red]")
         console.print("[yellow]Install Python using:[/yellow]")
@@ -546,7 +546,7 @@ def doctor() -> None:
     # Check cache dir
     config = get_config()
     cache_dir = config.get_cache_dir()
-    console.print(f"\n[bold]Cache:[/bold]")
+    console.print("\n[bold]Cache:[/bold]")
     if cache_dir.exists():
         console.print(f"[green]✓[/green] Cache dir: {cache_dir}")
     else:
@@ -562,7 +562,7 @@ def doctor() -> None:
         console.print("[yellow]○[/yellow] Config: Not found (using defaults)")
 
     console.print(f"\n[cyan]EasyEnv version:[/cyan] {__version__}")
-    
+
     # Show quick start if no Python available
     if not available_versions:
         console.print("\n[bold yellow]Quick Start:[/bold yellow]")
@@ -603,7 +603,7 @@ def version() -> None:
 def welcome() -> None:
     """Show welcome screen with quick start guide."""
     from easyenv.welcome import show_welcome
-    
+
     show_welcome()
 
 
@@ -613,27 +613,27 @@ def python(
     version: str | None = typer.Argument(None, help="Python version (e.g., 3.11, 3.12)"),
 ) -> None:
     """Manage Python versions using uv.
-    
+
     [bold cyan]Examples:[/bold cyan]
-    
+
       [green]# List available Python versions[/green]
       easyenv-cli python list
-      
+
       [green]# Install Python 3.11[/green]
       easyenv-cli python install 3.11
-      
+
       [green]# Install Python 3.12[/green]
       easyenv-cli python install 3.12
-      
+
       [green]# Uninstall Python 3.12[/green]
       easyenv-cli python uninstall 3.12
     """
     import subprocess
-    
+
     try:
         if action == "list":
             console.print("[cyan]Checking installed Python versions...[/cyan]\n")
-            
+
             # Check with uv
             result = subprocess.run(
                 ["uv", "python", "list"],
@@ -641,13 +641,13 @@ def python(
                 text=True,
                 check=False,
             )
-            
+
             if result.returncode == 0:
                 console.print(result.stdout)
             else:
                 console.print("[yellow]Could not list Python versions[/yellow]")
                 console.print(result.stderr)
-            
+
             # Also show what doctor sees
             console.print("\n[cyan]Available for EasyEnv:[/cyan]")
             for py_ver in ["3.11", "3.12", "3.13"]:
@@ -656,51 +656,51 @@ def python(
                     console.print(f"[green]✓[/green] Python {py_ver}: {py_msg}")
                 else:
                     console.print(f"[yellow]○[/yellow] Python {py_ver}: Not found")
-        
+
         elif action == "install":
             if not version:
                 console.print("[red]Error:[/red] Version required for install")
                 console.print("Example: easyenv-cli python install 3.11")
                 raise typer.Exit(1)
-            
+
             console.print(f"[cyan]Installing Python {version}...[/cyan]")
-            
+
             result = subprocess.run(
                 ["uv", "python", "install", version],
                 check=False,
             )
-            
+
             if result.returncode == 0:
                 console.print(f"[green]✓ Python {version} installed successfully![/green]")
                 console.print(f"\nYou can now use: [cyan]py={version}[/cyan] in your specs")
             else:
                 console.print(f"[red]Failed to install Python {version}[/red]")
                 raise typer.Exit(1)
-        
+
         elif action == "uninstall":
             if not version:
                 console.print("[red]Error:[/red] Version required for uninstall")
                 console.print("Example: easyenv-cli python uninstall 3.12")
                 raise typer.Exit(1)
-            
+
             console.print(f"[cyan]Uninstalling Python {version}...[/cyan]")
-            
+
             result = subprocess.run(
                 ["uv", "python", "uninstall", version],
                 check=False,
             )
-            
+
             if result.returncode == 0:
                 console.print(f"[green]✓ Python {version} uninstalled[/green]")
             else:
                 console.print(f"[red]Failed to uninstall Python {version}[/red]")
                 raise typer.Exit(1)
-        
+
         else:
             console.print(f"[red]Unknown action:[/red] {action}")
             console.print("Available actions: list, install, uninstall")
             raise typer.Exit(1)
-    
+
     except FileNotFoundError:
         console.print("[red]Error:[/red] UV not found")
         console.print("Install UV first: [cyan]curl -LsSf https://astral.sh/uv/install.sh | sh[/cyan]")
