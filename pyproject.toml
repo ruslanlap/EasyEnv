@@ -29,7 +29,7 @@ classifiers = [
 ]
 
 dependencies = [
-    "typer[all]>=0.12.0",
+    "typer>=0.12.0",
     "pydantic>=2.0.0",
     "pyyaml>=6.0",
     "textual>=0.47.0",
@@ -48,7 +48,7 @@ dev = [
 ]
 
 [project.scripts]
-easyenv = "easyenv.cli:app"
+easyenv-cli = "easyenv.cli:app"
 
 [project.urls]
 Homepage = "https://github.com/ruslanlap/EasyEnv"
