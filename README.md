@@ -27,9 +27,14 @@ pip install easyenv-cli
 pipx install easyenv-cli
 # or (using uv)
 uv tool install easyenv-cli
+
+# First run shows welcome screen with quick start guide
+easyenv-cli
 ```
 
 ## Quick Start
+
+**First time?** Run `easyenv-cli doctor` to check your setup, or `easyenv-cli welcome` to see the quick start guide.
 
 ### Run command in ephemeral environment
 
@@ -116,6 +121,22 @@ easyenv-cli lock export abc123def456 -o production.lock.json
 
 # Import lock file (reproduces exact environment)
 easyenv-cli lock import production.lock.json
+```
+
+### Python version management
+
+```bash
+# List installed Python versions
+easyenv-cli python list
+
+# Install Python 3.11
+easyenv-cli python install 3.11
+
+# Install Python 3.12
+easyenv-cli python install 3.12
+
+# Uninstall Python version
+easyenv-cli python uninstall 3.12
 ```
 
 ### Diagnostics

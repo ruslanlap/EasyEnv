@@ -25,7 +25,7 @@ def show_welcome() -> None:
     welcome_text.append("easyenv-cli doctor\n", style="cyan")
     
     welcome_text.append("2. Install Python:     ", style="white")
-    welcome_text.append("uv python install 3.11\n", style="cyan")
+    welcome_text.append("easyenv-cli python install 3.11\n", style="cyan")
     
     welcome_text.append("3. Try an example:     ", style="white")
     welcome_text.append("easyenv-cli run 'py=3.11 pkgs:requests' -- python -c 'import requests; print(\"✓\")'\n\n", style="cyan")

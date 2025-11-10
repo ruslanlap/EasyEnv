@@ -18,11 +18,14 @@ This will show:
 If `doctor` shows no Python versions available:
 
 ```bash
-# Install Python 3.11 using uv (recommended)
-uv python install 3.11
+# List available Python versions
+easyenv-cli python list
+
+# Install Python 3.11 (recommended)
+easyenv-cli python install 3.11
 
 # Or Python 3.12
-uv python install 3.12
+easyenv-cli python install 3.12
 
 # Verify installation
 easyenv-cli doctor
@@ -89,6 +92,8 @@ easyenv-cli purge --older-than 30d
 
 **Solution**: Install the required Python version:
 ```bash
+easyenv-cli python install 3.11
+# or directly with uv
 uv python install 3.11
 ```
 

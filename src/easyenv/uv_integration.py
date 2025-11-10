@@ -113,17 +113,20 @@ class UVIntegration:
             # Check if it's a Python not found error
             if "No interpreter found" in stderr or "Python downloads are set to 'never'" in stderr:
                 error_msg = (
-                    f"Python {python_version} is not available on your system.\n\n"
-                    f"To fix this, you have several options:\n\n"
-                    f"1. Install Python {python_version} using uv (recommended):\n"
-                    f"   uv python install {python_version}\n\n"
-                    f"2. Install Python {python_version} using your system package manager:\n"
-                    f"   - Ubuntu/Debian: sudo apt install python{python_version}\n"
-                    f"   - macOS: brew install python@{python_version}\n"
-                    f"   - Windows: Download from python.org\n\n"
-                    f"3. Use a different Python version that's already installed:\n"
-                    f"   Run 'easyenv-cli doctor' to see available Python versions\n\n"
-                    f"After installing Python, try your command again."
+                    f"Python {python_version} is not available for uv to use.\n\n"
+                    f"[Quick Fix]\n"
+                    f"Install Python {python_version} using uv (recommended):\n"
+                    f"  easyenv-cli python install {python_version}\n"
+                    f"  # or directly: uv python install {python_version}\n\n"
+                    f"[Alternative]\n"
+                    f"If Python {python_version} is already installed on your system but uv can't find it,\n"
+                    f"you may need to install it via uv for proper integration.\n\n"
+                    f"[Other Options]\n"
+                    f"• Use a different Python version: Run 'easyenv-cli doctor' to see what's available\n"
+                    f"• Install from system package manager (may require uv installation after):\n"
+                    f"  - Ubuntu/Debian: sudo apt install python{python_version}\n"
+                    f"  - macOS: brew install python@{python_version}\n\n"
+                    f"After installing, try your command again."
                 )
                 raise UVError(error_msg) from e
             
