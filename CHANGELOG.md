@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.4] - 2024-11-10
+
+### Added
+- Cool ASCII art banner in welcome screen
+- Python path detection method for better compatibility with system Python installations
+
+### Fixed
+- Python detection now properly finds system Python installations via uv python list
+- Improved error messages in doctor command with clearer instructions
+
 ## [0.1.3] - 2024-11-10
 
 ### Fixed
