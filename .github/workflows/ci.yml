@@ -1,0 +1,167 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  test:
+    name: Test Python ${{ matrix.python-version }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python-version: ["3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Run tests
+        run: |
+          pytest -v --cov=easyenv --cov-report=xml --cov-report=term-missing
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: false
+
+  lint:
+    name: Lint and Type Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Run Ruff
+        run: |
+          ruff check .
+
+      - name: Run Ruff format check
+        run: |
+          ruff format --check .
+
+      - name: Run mypy
+        run: |
+          mypy src/easyenv
+        continue-on-error: true
+
+  build:
+    name: Build Package
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade build
+
+      - name: Build package
+        run: |
+          python -m build
+
+      - name: Check distribution
+        run: |
+          python -m pip install --upgrade twine pkginfo
+          twine check dist/*
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  integration:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [test, lint]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Install EasyEnv
+        run: |
+          pip install -e .
+
+      - name: Test CLI - doctor
+        run: |
+          easyenv doctor
+
+      - name: Test CLI - version
+        run: |
+          easyenv version
+
+      - name: Test CLI - list
+        run: |
+          easyenv list
+
+      - name: Test CLI - du
+        run: |
+          easyenv du
+
+      - name: Test CLI - prepare
+        run: |
+          easyenv prepare "py=3.11 pkgs:requests==2.32.3" -v
+
+      - name: Test CLI - run
+        run: |
+          easyenv run "py=3.11 pkgs:requests==2.32.3" -v -- python -c "import requests; print(f'Requests {requests.__version__}')"
+
+      - name: Test CLI - list after prepare
+        run: |
+          easyenv list
+
+      - name: Test CLI - templates
+        run: |
+          easyenv template add test "py=3.12 pkgs:pytest"
+          easyenv template list
+
+      - name: Test CLI - purge dry run
+        run: |
+          easyenv purge --older-than 1d --dry-run
