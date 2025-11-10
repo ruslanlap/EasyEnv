@@ -56,6 +56,12 @@ def test_parse_dsl_missing_python():
         parse_dsl("pkgs:requests")
 
 
+def test_parse_dsl_uses_default_python():
+    """Test that DSL uses default python when provided."""
+    spec = parse_dsl("pkgs:requests", default_python="3.10")
+    assert spec.python == "3.10"
+
+
 def test_parse_dsl_empty():
     """Test that empty DSL fails."""
     with pytest.raises(SpecParseError, match="Empty DSL string"):
@@ -133,6 +139,19 @@ packages:
         parse_yaml(yaml_file)
 
 
+def test_parse_yaml_uses_default_python(tmp_path):
+    """Test YAML uses default python when config provides it."""
+    yaml_content = """
+packages:
+  - "requests"
+"""
+    yaml_file = tmp_path / "spec.yaml"
+    yaml_file.write_text(yaml_content)
+
+    spec = parse_yaml(yaml_file, default_python="3.9")
+    assert spec.python == "3.9"
+
+
 def test_parse_yaml_not_found():
     """Test that missing YAML file fails."""
     with pytest.raises(SpecParseError, match="not found"):
@@ -157,6 +176,19 @@ packages:
 
     spec = parse_spec(str(yaml_file))
     assert spec.python == "3.12"
+
+
+def test_parse_spec_uses_default(tmp_path):
+    """Test parse_spec falls back to provided default python."""
+    yaml_content = """
+packages:
+  - "requests"
+"""
+    yaml_file = tmp_path / "spec.yaml"
+    yaml_file.write_text(yaml_content)
+
+    spec = parse_spec(str(yaml_file), default_python="3.8")
+    assert spec.python == "3.8"
 
 
 def test_export_yaml(tmp_path):
