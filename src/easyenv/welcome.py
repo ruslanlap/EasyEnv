@@ -36,7 +36,9 @@ def show_welcome() -> None:
     welcome_text.append("EasyEnv CLI", style="bold green")
     welcome_text.append("! 🚀\n\n", style="bold cyan")
 
-    welcome_text.append("Ephemeral, reproducible, cached development environments.\n\n", style="dim")
+    welcome_text.append(
+        "Ephemeral, reproducible, cached development environments.\n\n", style="dim"
+    )
 
     welcome_text.append("Quick Start:\n", style="bold yellow")
     welcome_text.append("1. Check your setup:  ", style="white")
@@ -46,7 +48,10 @@ def show_welcome() -> None:
     welcome_text.append("easyenv-cli python install 3.11\n", style="cyan")
 
     welcome_text.append("3. Try an example:     ", style="white")
-    welcome_text.append("easyenv-cli run 'py=3.11 pkgs:requests' -- python -c 'import requests; print(\"✓\")'\n\n", style="cyan")
+    welcome_text.append(
+        "easyenv-cli run 'py=3.11 pkgs:requests' -- python -c 'import requests; print(\"✓\")'\n\n",
+        style="cyan",
+    )
 
     welcome_text.append("Documentation:\n", style="bold yellow")
     welcome_text.append("• Quick Start: ", style="white")

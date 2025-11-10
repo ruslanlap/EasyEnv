@@ -56,7 +56,9 @@ def get_cache_manager(config: EasyEnvConfig | None = None) -> CacheManager:
 
 @app.command()
 def run(
-    spec: str = typer.Argument(..., help="Spec string or YAML path. Example: 'py=3.11 pkgs:requests'"),
+    spec: str = typer.Argument(
+        ..., help="Spec string or YAML path. Example: 'py=3.11 pkgs:requests'"
+    ),
     command: list[str] = typer.Argument(..., help="Command to run after '--'"),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
     offline: bool = typer.Option(False, "--offline", help="Offline mode"),
@@ -164,7 +166,9 @@ def run(
 
 @app.command()
 def prepare(
-    spec: str = typer.Argument(..., help="Spec string or YAML path. Example: 'py=3.11 pkgs:requests'"),
+    spec: str = typer.Argument(
+        ..., help="Spec string or YAML path. Example: 'py=3.11 pkgs:requests'"
+    ),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
     offline: bool = typer.Option(False, "--offline", help="Offline mode"),
 ) -> None:
@@ -505,7 +509,9 @@ def doctor() -> None:
         console.print(f"[green]✓[/green] UV: {uv_msg}")
     else:
         console.print(f"[red]✗[/red] UV: {uv_msg}")
-        console.print("[yellow]  → Install UV: curl -LsSf https://astral.sh/uv/install.sh | sh[/yellow]")
+        console.print(
+            "[yellow]  → Install UV: curl -LsSf https://astral.sh/uv/install.sh | sh[/yellow]"
+        )
 
     # Check Python versions
     console.print("\n[bold]Python versions (for uv):[/bold]")
@@ -515,6 +521,7 @@ def doctor() -> None:
         if py_ok:
             # Check if it's actually usable by uv
             import subprocess
+
             try:
                 result = subprocess.run(
                     ["uv", "python", "find", py_ver],
@@ -570,7 +577,9 @@ def doctor() -> None:
         console.print("\n[bold yellow]Quick Start:[/bold yellow]")
         console.print("1. Install Python: [cyan]easyenv-cli python install 3.11[/cyan]")
         console.print("2. Run doctor again: [cyan]easyenv-cli doctor[/cyan]")
-        console.print("3. Try example: [cyan]easyenv-cli run 'py=3.11 pkgs:requests' -- python -c 'import requests; print(\"OK\")'[/cyan]")
+        console.print(
+            "3. Try example: [cyan]easyenv-cli run 'py=3.11 pkgs:requests' -- python -c 'import requests; print(\"OK\")'[/cyan]"
+        )
 
 
 @app.command()
@@ -705,7 +714,9 @@ def python(
 
     except FileNotFoundError:
         console.print("[red]Error:[/red] UV not found")
-        console.print("Install UV first: [cyan]curl -LsSf https://astral.sh/uv/install.sh | sh[/cyan]")
+        console.print(
+            "Install UV first: [cyan]curl -LsSf https://astral.sh/uv/install.sh | sh[/cyan]"
+        )
         raise typer.Exit(1)
     except Exception as e:
         console.print(f"[red]Error:[/red] {e}")

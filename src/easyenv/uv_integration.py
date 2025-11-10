@@ -370,13 +370,13 @@ class UVIntegration:
 
             if result.returncode == 0:
                 # Parse output to find Python installation
-                for line in result.stdout.split('\n'):
-                    if python_version in line and '/usr/bin/python' in line:
+                for line in result.stdout.split("\n"):
+                    if python_version in line and "/usr/bin/python" in line:
                         # Extract path from line like:
                         # cpython-3.12.3-linux-x86_64-gnu /usr/bin/python3.12
                         parts = line.split()
                         for part in parts:
-                            if part.startswith('/usr/bin/python'):
+                            if part.startswith("/usr/bin/python"):
                                 return part
 
             return None
